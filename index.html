@@ -205,7 +205,7 @@ h1 {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.75rem;
+  overflow: hidden;
   transition: all 0.2s;
   position: relative;
 }
@@ -214,6 +214,18 @@ h1 {
   border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.game-cover {
+  width: 100%;
+  aspect-ratio: 460/215;
+  object-fit: cover;
+  display: block;
+  background: var(--bg);
+}
+
+.game-card-body {
+  padding: 0.75rem;
 }
 
 .game-card-header {
@@ -301,7 +313,7 @@ h1 {
     gap: 0.5rem;
   }
   
-  .game-card {
+  .game-card-body {
     padding: 0.6rem;
   }
   
@@ -475,20 +487,23 @@ function renderGames() {
         <div class="game-cards">
           ${gamesInGenre.map(game => `
             <div class="game-card">
-              <div class="game-card-header">
-                <div class="game-title">${game.name}</div>
-                <button class="delete-btn" onclick="deleteGame(${games.indexOf(game)})" title="Delete">✕</button>
+              <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" alt="${game.name}" loading="lazy">
+              <div class="game-card-body">
+                <div class="game-card-header">
+                  <div class="game-title">${game.name}</div>
+                  <button class="delete-btn" onclick="deleteGame(${games.indexOf(game)})" title="Delete">✕</button>
+                </div>
+                <div class="game-meta">
+                  <span class="game-rating">${game.rating}%</span>
+                  <span class="game-year">${game.year}</span>
+                </div>
+                <div class="game-genre">${game.genre}</div>
+                <select class="status-select" onchange="updateStatus(${games.indexOf(game)}, this.value)">
+                  <option value="To Play" ${game.status === 'To Play' ? 'selected' : ''}>To Play</option>
+                  <option value="Playing" ${game.status === 'Playing' ? 'selected' : ''}>Playing</option>
+                  <option value="Finished" ${game.status === 'Finished' ? 'selected' : ''}>Finished</option>
+                </select>
               </div>
-              <div class="game-meta">
-                <span class="game-rating">${game.rating}%</span>
-                <span class="game-year">${game.year}</span>
-              </div>
-              <div class="game-genre">${game.genre}</div>
-              <select class="status-select" onchange="updateStatus(${games.indexOf(game)}, this.value)">
-                <option value="To Play" ${game.status === 'To Play' ? 'selected' : ''}>To Play</option>
-                <option value="Playing" ${game.status === 'Playing' ? 'selected' : ''}>Playing</option>
-                <option value="Finished" ${game.status === 'Finished' ? 'selected' : ''}>Finished</option>
-              </select>
             </div>
           `).join('')}
         </div>
