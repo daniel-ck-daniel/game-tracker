@@ -208,12 +208,22 @@ h1 {
   overflow: hidden;
   transition: all 0.2s;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .game-card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.game-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .game-cover {
@@ -270,6 +280,11 @@ h1 {
 .game-rating {
   color: var(--positive);
   font-weight: 600;
+}
+
+.game-ratings-count {
+  color: var(--text-muted);
+  font-size: 0.75rem;
 }
 
 .game-year {
@@ -406,7 +421,7 @@ let games = JSON.parse(localStorage.getItem('gameTrackerGames')) || [];
 // Initialize with starter games if empty
 if (games.length === 0) {
   games = [
-    { name: 'Dredge', primaryGenre: 'Adventure', genre: 'Adventure, Fishing', rating: 96, year: 2023, status: 'To Play', appid: 1562430 },
+    { name: 'Dredge', primaryGenre: 'Adventure', genre: 'Adventure, Fishing', rating: 96, ratingsCount: 50000, year: 2023, status: 'To Play', appid: 1562430 },
     { name: 'Subnautica', primaryGenre: 'Survival', genre: 'Survival, Exploration', rating: 93, year: 2018, status: 'To Play', appid: 264710 },
     { name: 'Satisfactory', primaryGenre: 'Automation', genre: 'Automation, Factory Building', rating: 97, year: 2024, status: 'To Play', appid: 526870 },
     { name: 'The Planet Crafter', primaryGenre: 'Survival', genre: 'Survival, Crafting', rating: 94, year: 2024, status: 'To Play', appid: 1284190 },
@@ -445,6 +460,15 @@ if (games.length === 0) {
     { name: 'A Short Hike', primaryGenre: 'Exploration', genre: 'Exploration, Relaxing', rating: 98, year: 2019, status: 'To Play', appid: 1055540 }
   ];
   saveGames();
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
 }
 
 function saveGames() {
@@ -487,18 +511,23 @@ function renderGames() {
         <div class="game-cards">
           ${gamesInGenre.map(game => `
             <div class="game-card">
-              <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" alt="${game.name}" loading="lazy">
-              <div class="game-card-body">
-                <div class="game-card-header">
-                  <div class="game-title">${game.name}</div>
-                  <button class="delete-btn" onclick="deleteGame(${games.indexOf(game)})" title="Delete">✕</button>
+              <a href="https://store.steampowered.com/app/${game.appid}" target="_blank" class="game-link">
+                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" alt="${game.name}" loading="lazy">
+                <div class="game-card-body">
+                  <div class="game-card-header">
+                    <div class="game-title">${game.name}</div>
+                    <button class="delete-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteGame(${games.indexOf(game)})" title="Delete">✕</button>
+                  </div>
+                  <div class="game-meta">
+                    <span class="game-rating">${game.rating}%</span>
+                    ${game.ratingsCount ? `<span class="game-ratings-count">(${formatNumber(game.ratingsCount)})</span>` : ''}
+                    <span class="game-year">${game.year}</span>
+                  </div>
+                  <div class="game-genre">${game.genre}</div>
                 </div>
-                <div class="game-meta">
-                  <span class="game-rating">${game.rating}%</span>
-                  <span class="game-year">${game.year}</span>
-                </div>
-                <div class="game-genre">${game.genre}</div>
-                <select class="status-select" onchange="updateStatus(${games.indexOf(game)}, this.value)">
+              </a>
+              <div style="padding: 0 0.75rem 0.75rem;">
+                <select class="status-select" onclick="event.stopPropagation()" onchange="updateStatus(${games.indexOf(game)}, this.value)">
                   <option value="To Play" ${game.status === 'To Play' ? 'selected' : ''}>To Play</option>
                   <option value="Playing" ${game.status === 'Playing' ? 'selected' : ''}>Playing</option>
                   <option value="Finished" ${game.status === 'Finished' ? 'selected' : ''}>Finished</option>
@@ -585,6 +614,7 @@ async function addGame() {
     // Get rating from SteamSpy
     statusDiv.innerHTML = '<div class="loading">Fetching Steam rating...</div>';
     let rating = 'N/A';
+    let ratingsCount = null;
     
     try {
       const spyUrl = `https://steamspy.com/api.php?request=appdetails&appid=${appid}`;
@@ -595,6 +625,7 @@ async function addGame() {
         const total = spyData.positive + spyData.negative;
         if (total > 0) {
           rating = Math.round((spyData.positive / total) * 100);
+          ratingsCount = total;
         }
       }
     } catch (error) {
@@ -608,6 +639,7 @@ async function addGame() {
       primaryGenre,
       genre,
       rating,
+      ratingsCount,
       year,
       status: 'To Play',
       appid
