@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Tracker</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --positive: #3fb950;
+  --negative: #f85149;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+/* ADD GAME FORM */
+.add-game {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.add-game h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.form-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.form-group input {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-group button {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.95rem;
+}
+
+.form-group button:hover {
+  background: var(--accent-hover);
+}
+
+.loading {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.error {
+  color: var(--negative);
+  margin-top: 0.5rem;
+}
+
+/* FILTERS */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.filter-group select {
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* TABLE */
+.table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+th:hover {
+  background: rgba(88, 166, 255, 0.1);
+}
+
+th.sortable::after {
+  content: ' ⇅';
+  opacity: 0.3;
+}
+
+th.sorted-asc::after {
+  content: ' ↑';
+  opacity: 1;
+}
+
+th.sorted-desc::after {
+  content: ' ↓';
+  opacity: 1;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+tr:hover {
+  background: rgba(88, 166, 255, 0.05);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.game-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rating {
+  color: var(--positive);
+  font-weight: 600;
+}
+
+.status {
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-to-play {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+}
+
+.status-playing {
+  background: rgba(251, 211, 141, 0.15);
+  color: #fbd38d;
+}
+
+.status-finished {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--positive);
+}
+
+.status-select {
+  padding: 0.3rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--negative);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem 0.5rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+}
+
+/* STATS */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Game Tracker</h1>
+  <p class="subtitle">PC games to play and played</p>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-label">Total Games</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-to-play">0</div>
+      <div class="stat-label">To Play</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-playing">0</div>
+      <div class="stat-label">Playing</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-finished">0</div>
+      <div class="stat-label">Finished</div>
+    </div>
+  </div>
+
+  <!-- Add Game -->
+  <div class="add-game">
+    <h2>Add Game</h2>
+    <div class="form-group">
+      <input type="text" id="game-name-input" placeholder="Enter game name (e.g., Subnautica)">
+      <button onclick="addGame()">Add Game</button>
+    </div>
+    <div id="add-status"></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Status:</label>
+      <select id="filter-status" onchange="filterGames()">
+        <option value="all">All</option>
+        <option value="To Play">To Play</option>
+        <option value="Playing">Playing</option>
+        <option value="Finished">Finished</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Genre:</label>
+      <select id="filter-genre" onchange="filterGames()">
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Min Rating:</label>
+      <select id="filter-rating" onchange="filterGames()">
+        <option value="0">Any</option>
+        <option value="70">70%+</option>
+        <option value="80">80%+</option>
+        <option value="90">90%+</option>
+        <option value="95">95%+</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Game Table -->
+  <div class="table-container">
+    <table id="game-table">
+      <thead>
+        <tr>
+          <th class="sortable" onclick="sortTable('name')">Game</th>
+          <th class="sortable" onclick="sortTable('genre')">Genre</th>
+          <th class="sortable" onclick="sortTable('rating')">Steam %</th>
+          <th class="sortable" onclick="sortTable('year')">Year</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="game-list">
+        <!-- Games will be populated here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Game data stored in localStorage
+let games = JSON.parse(localStorage.getItem('gameTrackerGames')) || [];
+let currentSort = { column: null, direction: 'asc' };
+
+// Steam API proxy (using a CORS proxy for client-side calls)
+const STEAM_API_PROXY = 'https://store.steampowered.com/api/appdetails?appids=';
+
+// Initialize with starter games if empty
+if (games.length === 0) {
+  games = [
+    { name: 'Dredge', genre: 'Adventure, Fishing', rating: 96, year: 2023, status: 'To Play', appid: 1562430 },
+    { name: 'Subnautica', genre: 'Survival, Exploration', rating: 93, year: 2018, status: 'To Play', appid: 264710 },
+    { name: 'Satisfactory', genre: 'Automation, Factory Building', rating: 97, year: 2024, status: 'To Play', appid: 526870 },
+    { name: 'The Planet Crafter', genre: 'Survival, Crafting', rating: 94, year: 2024, status: 'To Play', appid: 1284190 },
+    { name: 'Hades', genre: 'Roguelike, Action', rating: 98, year: 2020, status: 'To Play', appid: 1145360 },
+    { name: 'Slay the Spire', genre: 'Roguelike, Card Game', rating: 97, year: 2019, status: 'To Play', appid: 646570 },
+    { name: 'God of War', genre: 'Action, Adventure', rating: 93, year: 2022, status: 'To Play', appid: 1593500 },
+    { name: 'Parcel Simulator', genre: 'Simulation, Automation', rating: 93, year: 2025, status: 'To Play', appid: 2424010 },
+    { name: 'PowerWash Simulator', genre: 'Simulation, Relaxing', rating: 98, year: 2022, status: 'To Play', appid: 1290000 },
+    { name: 'Factorio', genre: 'Automation, Factory Building', rating: 98, year: 2020, status: 'To Play', appid: 427520 },
+    { name: 'Terraria', genre: 'Sandbox, Crafting', rating: 97, year: 2011, status: 'To Play', appid: 105600 },
+    { name: 'Stardew Valley', genre: 'Farming, RPG', rating: 98, year: 2016, status: 'To Play', appid: 413150 },
+    { name: 'Core Keeper', genre: 'Survival, Crafting', rating: 92, year: 2024, status: 'To Play', appid: 1621690 },
+    { name: 'Dyson Sphere Program', genre: 'Automation, Space', rating: 95, year: 2021, status: 'To Play', appid: 1366540 },
+    { name: 'Astroneer', genre: 'Exploration, Sandbox', rating: 90, year: 2019, status: 'To Play', appid: 361420 },
+    { name: 'Vampire Survivors', genre: 'Roguelike, Action', rating: 97, year: 2022, status: 'To Play', appid: 1794680 },
+    { name: 'Dead Cells', genre: 'Roguelike, Action', rating: 95, year: 2018, status: 'To Play', appid: 588650 },
+    
+    // Additional recommendations
+    { name: 'Valheim', genre: 'Survival, Exploration', rating: 95, year: 2021, status: 'To Play', appid: 892970 },
+    { name: 'Grounded', genre: 'Survival, Exploration', rating: 93, year: 2022, status: 'To Play', appid: 962130 },
+    { name: 'Outer Wilds', genre: 'Exploration, Mystery', rating: 93, year: 2019, status: 'To Play', appid: 753640 },
+    { name: 'Inscryption', genre: 'Roguelike, Card Game', rating: 97, year: 2021, status: 'To Play', appid: 1092790 },
+    { name: 'Unpacking', genre: 'Puzzle, Relaxing', rating: 98, year: 2021, status: 'To Play', appid: 1135690 },
+    { name: 'Shapez 2', genre: 'Automation, Puzzle', rating: 97, year: 2024, status: 'To Play', appid: 2162800 },
+    { name: 'Timberborn', genre: 'City Builder, Strategy', rating: 94, year: 2023, status: 'To Play', appid: 1062090 },
+    { name: 'Against the Storm', genre: 'City Builder, Roguelike', rating: 94, year: 2023, status: 'To Play', appid: 1336490 },
+    { name: 'Oxygen Not Included', genre: 'Colony Sim, Survival', rating: 91, year: 2019, status: 'To Play', appid: 457140 },
+    { name: 'RimWorld', genre: 'Colony Sim, Strategy', rating: 98, year: 2018, status: 'To Play', appid: 294100 },
+    { name: 'Cult of the Lamb', genre: 'Roguelike, Management', rating: 95, year: 2022, status: 'To Play', appid: 1313140 },
+    { name: 'Risk of Rain 2', genre: 'Roguelike, Action', rating: 94, year: 2020, status: 'To Play', appid: 632360 },
+    { name: 'FTL: Faster Than Light', genre: 'Roguelike, Strategy', rating: 95, year: 2012, status: 'To Play', appid: 212680 },
+    { name: 'Into the Breach', genre: 'Roguelike, Tactics', rating: 95, year: 2018, status: 'To Play', appid: 590380 },
+    { name: 'Enshrouded', genre: 'Survival, Exploration', rating: 85, year: 2024, status: 'To Play', appid: 1203620 },
+    { name: 'Palworld', genre: 'Survival, Creature Collecting', rating: 94, year: 2024, status: 'To Play', appid: 1623730 },
+    { name: 'Brotato', genre: 'Roguelike, Action', rating: 95, year: 2023, status: 'To Play', appid: 1942280 },
+    { name: 'Automation Empire', genre: 'Automation, Factory Building', rating: 85, year: 2019, status: 'To Play', appid: 1034140 },
+    { name: 'Hydroneer', genre: 'Mining, Automation', rating: 88, year: 2020, status: 'To Play', appid: 1106840 },
+    { name: 'A Short Hike', genre: 'Exploration, Relaxing', rating: 98, year: 2019, status: 'To Play', appid: 1055540 }
+  ];
+  saveGames();
+}
+
+function saveGames() {
+  localStorage.setItem('gameTrackerGames', JSON.stringify(games));
+  renderGames();
+  updateStats();
+  updateGenreFilter();
+}
+
+function renderGames() {
+  const tbody = document.getElementById('game-list');
+  const statusFilter = document.getElementById('filter-status').value;
+  const genreFilter = document.getElementById('filter-genre').value;
+  const ratingFilter = parseInt(document.getElementById('filter-rating').value);
+  
+  let filtered = games.filter(game => {
+    if (statusFilter !== 'all' && game.status !== statusFilter) return false;
+    if (genreFilter !== 'all' && !game.genre.toLowerCase().includes(genreFilter.toLowerCase())) return false;
+    if (game.rating < ratingFilter) return false;
+    return true;
+  });
+  
+  tbody.innerHTML = filtered.map((game, index) => `
+    <tr>
+      <td class="game-title">${game.name}</td>
+      <td>${game.genre}</td>
+      <td class="rating">${game.rating}%</td>
+      <td>${game.year}</td>
+      <td>
+        <select class="status-select" onchange="updateStatus(${games.indexOf(game)}, this.value)">
+          <option value="To Play" ${game.status === 'To Play' ? 'selected' : ''}>To Play</option>
+          <option value="Playing" ${game.status === 'Playing' ? 'selected' : ''}>Playing</option>
+          <option value="Finished" ${game.status === 'Finished' ? 'selected' : ''}>Finished</option>
+        </select>
+      </td>
+      <td>
+        <button class="delete-btn" onclick="deleteGame(${games.indexOf(game)})" title="Delete">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = games.length;
+  document.getElementById('stat-to-play').textContent = games.filter(g => g.status === 'To Play').length;
+  document.getElementById('stat-playing').textContent = games.filter(g => g.status === 'Playing').length;
+  document.getElementById('stat-finished').textContent = games.filter(g => g.status === 'Finished').length;
+}
+
+function updateGenreFilter() {
+  const genres = new Set();
+  games.forEach(game => {
+    game.genre.split(',').forEach(g => genres.add(g.trim()));
+  });
+  
+  const select = document.getElementById('filter-genre');
+  const currentValue = select.value;
+  select.innerHTML = '<option value="all">All</option>';
+  [...genres].sort().forEach(genre => {
+    const option = document.createElement('option');
+    option.value = genre;
+    option.textContent = genre;
+    select.appendChild(option);
+  });
+  select.value = currentValue;
+}
+
+function filterGames() {
+  renderGames();
+}
+
+function updateStatus(index, newStatus) {
+  games[index].status = newStatus;
+  saveGames();
+}
+
+function deleteGame(index) {
+  if (confirm('Delete this game?')) {
+    games.splice(index, 1);
+    saveGames();
+  }
+}
+
+function sortTable(column) {
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = column;
+    currentSort.direction = 'asc';
+  }
+  
+  games.sort((a, b) => {
+    let aVal = a[column];
+    let bVal = b[column];
+    
+    if (column === 'name' || column === 'genre') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    
+    if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  // Update sort indicators
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+  });
+  const th = event.target;
+  th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  
+  renderGames();
+}
+
+async function addGame() {
+  const input = document.getElementById('game-name-input');
+  const gameName = input.value.trim();
+  const statusDiv = document.getElementById('add-status');
+  
+  if (!gameName) {
+    statusDiv.innerHTML = '<div class="error">Please enter a game name</div>';
+    return;
+  }
+  
+  statusDiv.innerHTML = '<div class="loading">Searching Steam...</div>';
+  
+  try {
+    // Search Steam for the game
+    const searchUrl = `https://steamcommunity.com/actions/SearchApps/${encodeURIComponent(gameName)}`;
+    const searchResponse = await fetch(searchUrl);
+    const searchResults = await searchResponse.json();
+    
+    if (!searchResults || searchResults.length === 0) {
+      statusDiv.innerHTML = '<div class="error">Game not found on Steam. Try a different name.</div>';
+      return;
+    }
+    
+    const appid = searchResults[0].appid;
+    
+    // Get game details
+    statusDiv.innerHTML = '<div class="loading">Fetching game details...</div>';
+    const detailsUrl = `https://store.steampowered.com/api/appdetails?appids=${appid}`;
+    const detailsResponse = await fetch(detailsUrl);
+    const detailsData = await detailsResponse.json();
+    
+    if (!detailsData[appid] || !detailsData[appid].success) {
+      statusDiv.innerHTML = '<div class="error">Could not fetch game details.</div>';
+      return;
+    }
+    
+    const gameData = detailsData[appid].data;
+    
+    // Extract data
+    const name = gameData.name;
+    const genre = gameData.genres ? gameData.genres.map(g => g.description).join(', ') : 'Unknown';
+    const year = gameData.release_date ? new Date(gameData.release_date.date).getFullYear() : 'Unknown';
+    
+    // Get Steam rating from our scraper API
+    statusDiv.innerHTML = '<div class="loading">Fetching Steam rating...</div>';
+    let rating = 'N/A';
+    
+    try {
+      const ratingResponse = await fetch(`/api/steam-rating?appid=${appid}`);
+      const ratingData = await ratingResponse.json();
+      if (ratingData.rating) {
+        rating = ratingData.rating;
+      }
+    } catch (error) {
+      console.error('Error fetching rating:', error);
+      // Continue with N/A rating
+    }
+    
+    // Check if game already exists
+    if (games.some(g => g.name.toLowerCase() === name.toLowerCase())) {
+      statusDiv.innerHTML = '<div class="error">Game already in your list!</div>';
+      return;
+    }
+    
+    // Add game
+    games.push({
+      name,
+      genre,
+      rating,
+      year,
+      status: 'To Play',
+      appid
+    });
+    
+    saveGames();
+    input.value = '';
+    statusDiv.innerHTML = `<div style="color: var(--positive)">✓ Added ${name}</div>`;
+    
+    setTimeout(() => {
+      statusDiv.innerHTML = '';
+    }, 3000);
+    
+  } catch (error) {
+    console.error(error);
+    statusDiv.innerHTML = '<div class="error">Error fetching game data. Try again.</div>';
+  }
+}
+
+// Allow Enter key to add game
+document.getElementById('game-name-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') addGame();
+});
+
+// Initial render
+renderGames();
+updateStats();
+updateGenreFilter();
+</script>
+
+</body>
+</html>
