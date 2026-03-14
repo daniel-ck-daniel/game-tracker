@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Tracker</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+
 <style>
 * {
   margin: 0;
@@ -506,7 +512,15 @@ function formatNumber(num) {
 }
 
 function saveGames() {
-  localStorage.setItem('gameTrackerGames', JSON.stringify(games));
+  // Save to Firebase if configured, otherwise localStorage
+  if (window.firebaseEnabled && window.db) {
+    window.db.ref('games').set(games).catch(err => {
+      console.error('Firebase save failed, falling back to localStorage:', err);
+      localStorage.setItem('gameTrackerGames', JSON.stringify(games));
+    });
+  } else {
+    localStorage.setItem('gameTrackerGames', JSON.stringify(games));
+  }
   renderGames();
   updateStats();
 }
@@ -732,12 +746,58 @@ document.getElementById('game-name-input').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') addGame();
 });
 
-// Initial render
-renderGames();
-updateStats();
+// Load games from Firebase or localStorage
+async function loadGames() {
+  if (window.firebaseEnabled && window.db) {
+    try {
+      const snapshot = await window.db.ref('games').once('value');
+      const firebaseGames = snapshot.val();
+      
+      if (firebaseGames && firebaseGames.length > 0) {
+        games = firebaseGames;
+        console.log('Loaded from Firebase');
+      } else {
+        // No data in Firebase, check localStorage
+        const localGames = JSON.parse(localStorage.getItem('gameTrackerGames'));
+        if (localGames && localGames.length > 0) {
+          games = localGames;
+          // Migrate to Firebase
+          await window.db.ref('games').set(games);
+          console.log('Migrated from localStorage to Firebase');
+        }
+      }
+    } catch (err) {
+      console.error('Firebase load failed:', err);
+      // Fall back to localStorage
+      const localGames = JSON.parse(localStorage.getItem('gameTrackerGames'));
+      if (localGames) games = localGames;
+    }
+  } else {
+    // No Firebase, use localStorage
+    const localGames = JSON.parse(localStorage.getItem('gameTrackerGames'));
+    if (localGames) games = localGames;
+  }
+  
+  renderGames();
+  updateStats();
+  fetchMissingRatings();
+  
+  // Listen for Firebase changes (real-time sync)
+  if (window.firebaseEnabled && window.db) {
+    window.db.ref('games').on('value', (snapshot) => {
+      const updatedGames = snapshot.val();
+      if (updatedGames && JSON.stringify(updatedGames) !== JSON.stringify(games)) {
+        games = updatedGames;
+        renderGames();
+        updateStats();
+        console.log('Games updated from Firebase');
+      }
+    });
+  }
+}
 
-// Fetch missing ratings on load
-fetchMissingRatings();
+// Initial render
+loadGames();
 </script>
 
 </body>
