@@ -418,6 +418,30 @@ h1 {
 // Game data stored in localStorage
 let games = JSON.parse(localStorage.getItem('gameTrackerGames')) || [];
 
+// New games to add (migration)
+const newGames = [
+  { name: 'Deep Rock Galactic', primaryGenre: 'Co-op', genre: 'Co-op, Shooter, Mining', rating: 97, ratingsCount: 0, year: 2020, status: 'To Play', appid: 548430 },
+  { name: 'Monster Train', primaryGenre: 'Roguelike', genre: 'Roguelike, Deck Builder', rating: 95, ratingsCount: 0, year: 2020, status: 'To Play', appid: 1102190 },
+  { name: 'Dome Keeper', primaryGenre: 'Roguelike', genre: 'Roguelike, Mining, Defense', rating: 93, ratingsCount: 0, year: 2022, status: 'To Play', appid: 1637320 },
+  { name: 'Loop Hero', primaryGenre: 'Roguelike', genre: 'Roguelike, Strategy', rating: 91, ratingsCount: 0, year: 2021, status: 'To Play', appid: 1282730 },
+  { name: 'Forager', primaryGenre: 'Crafting', genre: 'Crafting, Automation', rating: 90, ratingsCount: 0, year: 2019, status: 'To Play', appid: 751780 },
+  { name: 'Gunfire Reborn', primaryGenre: 'Roguelike', genre: 'Roguelike, FPS', rating: 94, ratingsCount: 0, year: 2021, status: 'To Play', appid: 1217060 },
+  { name: 'Moonlighter', primaryGenre: 'Roguelike', genre: 'Roguelike, Shop Management', rating: 89, ratingsCount: 0, year: 2018, status: 'To Play', appid: 606150 },
+  { name: 'Rogue Legacy 2', primaryGenre: 'Roguelike', genre: 'Roguelike, Platformer', rating: 97, ratingsCount: 0, year: 2022, status: 'To Play', appid: 1253920 },
+  { name: 'Luck Be A Landlord', primaryGenre: 'Roguelike', genre: 'Roguelike, Deck Builder', rating: 97, ratingsCount: 0, year: 2021, status: 'To Play', appid: 1404850 },
+  { name: 'Spiritfarer', primaryGenre: 'Adventure', genre: 'Adventure, Management', rating: 92, ratingsCount: 0, year: 2020, status: 'To Play', appid: 972660 }
+];
+
+// Add new games if they don't exist
+if (games.length > 0) {
+  newGames.forEach(newGame => {
+    if (!games.some(g => g.appid === newGame.appid)) {
+      games.push(newGame);
+    }
+  });
+  localStorage.setItem('gameTrackerGames', JSON.stringify(games));
+}
+
 // Initialize with starter games if empty
 if (games.length === 0) {
   games = [
